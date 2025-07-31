@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, process::Command};
 
 fn find_path<E: std::error::Error>(paths: Vec<Result<PathBuf, E>>) -> (PathBuf, PathBuf) {
     if cfg!(feature = "docs") {
@@ -6,8 +6,14 @@ fn find_path<E: std::error::Error>(paths: Vec<Result<PathBuf, E>>) -> (PathBuf, 
     }
 
     for path in paths.into_iter().flatten() {
-        let lib = path.join("lib").join("libirmin.so");
-        let header = path.join("include").join("irmin.h");
+        // shared object file changed to libirm from libirmin in recent builds
+        let lib = path.join("lib")
+            .join("libirm.so");
+
+        let header = path
+            .join("include")
+            .join("irmin.h");
+        
         if lib.exists() && header.exists() {
             return (lib, header);
         }
@@ -18,11 +24,24 @@ fn find_path<E: std::error::Error>(paths: Vec<Result<PathBuf, E>>) -> (PathBuf, 
 
 fn main() {
     let path = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
-    let opam_prefix =
-        std::env::var("OPAM_SWITCH_PREFIX").map(|x| PathBuf::from(x).join("lib").join("libirmin"));
+    
+    let opam_prefix = std::env::var("OPAM_SWITCH_PREFIX").map(|x| {
+        PathBuf::from(x)
+            .join("lib")
+            .join("libirmin")
+    });
+
     let libirmin_prefix = std::env::var("LIBIRMIN_PREFIX").map(PathBuf::from);
-    let local_opam = PathBuf::from("_opam").join("lib").join("libirmin");
-    let home_local = std::env::var("HOME").map(|x| PathBuf::from(x).join(".local"));
+
+    let local_opam = PathBuf::from("_opam")
+        .join("lib")
+        .join("libirmin");
+
+    let home_local = std::env::var("HOME")
+        .map(|x| {
+            PathBuf::from(x)
+                .join(".local")
+        });
 
     let (lib, header) = find_path(vec![
         Ok(path.join("..")),
@@ -38,24 +57,37 @@ fn main() {
     if cfg!(not(feature = "docs")) {
         println!(
             "cargo:rustc-link-arg=-Wl,-rpath,{}",
-            lib.parent().unwrap().display()
+            lib.parent()
+               .unwrap()
+               .display()
         );
         println!(
             "cargo:rustc-link-search={}",
-            lib.parent().unwrap().display()
+            lib.parent()
+               .unwrap()
+               .display()
         );
-        println!("cargo:rustc-link-lib=irmin");
+        // recent builds changes the shared object name to libirm
+        println!("cargo:rustc-link-lib=irm");
+        
+        // OCaml 5.x shifted away from a global lock and now uses domains
+        println!("cargo:rustc-link-lib=pthread");
+        println!("cargo:rustc-link-lib=dl");
+
         println!("cargo:rerun-if-changed={}", header.display());
     }
 
+    
     let bindings = bindgen::builder()
         .header(header.to_str().unwrap())
         .allowlist_type("Irmin.*")
         .allowlist_function("irmin.*")
-        .allowlist_function("caml.*")
+        .allowlist_function("caml*")
+        .generate_comments(true)
         .generate()
         .unwrap();
 
     let out_path = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
-    bindings.write_to_file(out_path.join("c.rs")).unwrap();
+    
+    bindings.write_to_file(out_path.join("c.rs")).unwrap()
 }

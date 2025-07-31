@@ -84,7 +84,23 @@ impl From<serde_json::Error> for Error {
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
+    use super::*;
+    
+    /* 
+    unit-tests fail with a no domain lock held, indicating that the OCaml runtime 
+    has not been properly initialized before our Rust code attempts to call into the 
+    Irmin library functions. 
+    
+    OCaml 5 moved into using what it calls `domains` which represent a significant shift 
+    from the traditional threading model in OCaml 4, which was limited by a global lock 
+    similar to Python's GIL. It also happends to make things more complex across the 
+    FFI barrier.
+
+    there seems to be something wrong with rusts test harness thats cant seem to aquire 
+    a lock from the ocaml runtime causing it fail when we make a call to irmin across the
+    FFI barrier.
+    */
+
     #[test]
     fn test_store() -> Result<(), Error> {
         let config = Config::<serde_json::Value>::git_mem()?;
