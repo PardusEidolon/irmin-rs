@@ -28,21 +28,9 @@ variable.
 
 ### Nix Users
 
-> [!NOTE]
-> The ocaml toochain is scoped in for users to install libirmin globally before building this crate.
-> should you wish to do so.
-
 Make sure you have [flake features](https://nixos.wiki/wiki/Flakes) enabled, then after installing [libirmin](https://github.com/mirage/irmin) using opam, you can then run a shell with [direnv](https://direnv.net/).
 ```
 $ direnv allow
-```
-
-If you preer to use `nix develop` you will have to export `LD_LIBRARY_PATH` which points to 
-your installation of `libirmin`. This is done because runtime library resolution uses different mechanisms to resolve library search paths. Nix deliberately isolates packages and their dependencies to ensure reproducible builds so we add this to enable the linker to find our
-custom path to the opam installed irmin library.
-
-```
-export LD_LIBRARY_PATH=/home/$USER/.opam/default/lib/libirmin/lib:$LD_LIBRARY_PATH
 ```
 
 ## Testing
