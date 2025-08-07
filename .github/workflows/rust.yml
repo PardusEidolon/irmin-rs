@@ -17,18 +17,24 @@ jobs:
           #- macos-latest
           - ubuntu-latest
         ocaml-compiler:
-          - 4.13.1
+          - 5.2.1
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/flakehub-cache-action@main
+
+
       - name: Use OCaml ${{ matrix.ocaml-version }}
-        uses: avsm/setup-ocaml@v2
+        uses: ocaml/setup-ocaml@v3.4.1
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler}}
 
-      - run: curl https://sh.rustup.rs -sSf | sh -s -- --profile minimal -y
       - run: opam install libirmin
-      - run: opam exec -- make test
+      
+      - run: nix develop --command cargo build --release
 
+      - run: nix develop --command cargo run --example json_merge
+      - run: nix develop --command cargo run --example test_store

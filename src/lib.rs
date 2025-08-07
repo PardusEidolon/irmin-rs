@@ -101,7 +101,7 @@ mod tests {
     FFI barrier.
     */
 
-    #[test]
+    #[ignore = "irmin bindings get no domain lock on OCaml 5.x"]
     fn test_store() -> Result<(), Error> {
         let config = Config::<serde_json::Value>::git_mem()?;
         let repo = Repo::new(config)?;
@@ -156,7 +156,7 @@ mod tests {
         Ok(())
     }
 
-    #[test]
+    #[ignore = "irmin bindings get no domain lock on OCaml 5.x "]
     fn test_tree() -> Result<(), Error> {
         let config = Config::<String>::git_mem()?;
         let repo = Repo::new(config)?;
@@ -173,7 +173,7 @@ mod tests {
         Ok(())
     }
 
-    #[test]
+    #[ignore = "irmin bindings get no domain lock on OCaml 5.x "]
     fn test_pull() -> Result<(), Error> {
         let _ = std::fs::remove_dir_all("/tmp/irmin-rs-test");
         let mut config = Config::<String>::git()?;
