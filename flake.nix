@@ -37,6 +37,7 @@
               libffi
               gmp
               clang
+              zstd
               llvmPackages.libclang
               glibc.dev
             ];
